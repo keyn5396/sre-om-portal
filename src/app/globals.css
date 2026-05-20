@@ -1,26 +1,52 @@
+/* globals.css
+   Configuración central de estilos del portal SRE OM Operations
+   En Tailwind v4, los tokens de diseño (colores, fuentes) se definen
+   aquí con variables CSS nativas, en lugar de tailwind.config.ts       */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Paleta principal — naranja como color de acción y foco */
+  --color-primary-50:  #fff7ed;
+  --color-primary-100: #ffedd5;
+  --color-primary-200: #fed7aa;
+  --color-primary-300: #fdba74;
+  --color-primary-400: #fb923c;
+  --color-primary-500: #f97316;
+  --color-primary-600: #ea580c;
+  --color-primary-700: #c2410c;
+  --color-primary-800: #9a3412;
+  --color-primary-900: #7c2d12;
+
+  /* Escala de grises oscuros para fondos, texto y sidebar */
+  --color-surface-50:  #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+
+  /* Colores de severidad — comunican urgencia visualmente */
+  --color-severity-critical: #ef4444;
+  --color-severity-high:     #f97316;
+  --color-severity-medium:   #eab308;
+  --color-severity-low:      #22c55e;
+
+  /* Colores de estado de casos */
+  --color-status-open:        #3b82f6;
+  --color-status-resolved:    #22c55e;
+  --color-status-escalated:   #ef4444;
+  --color-status-inprogress:  #f97316;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Estilos base del portal */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-surface-950);
+  color: var(--color-surface-100);
+  font-family: var(--font-sans, system-ui, sans-serif);
 }
