@@ -5,8 +5,7 @@
  * El QA completa el formulario con los datos del problema
  * y recibe un diagnóstico estructurado del agente.
  *
- * Es un Client Component porque maneja estado del formulario
- * y simula la respuesta del agente con useState.
+ * Usando mock response mientras se resuelve el billing de Gemini API.
  */
 
 "use client"
@@ -19,7 +18,7 @@ import { SQUADS, TIPOS_ERROR, SEVERIDADES } from "@/constants"
 import type { ConsultaAgente, RespuestaAgente } from "@/types/agent"
 import type { BadgeVariant } from "@/types/case"
 
-// Respuesta simulada del agente — se reemplaza con Gemini real en Fase 3
+// Respuesta simulada del agente — se reemplaza con Gemini real cuando se resuelva el billing
 const mockRespuestaAgente: RespuestaAgente = {
   agenteDerivado:  "Agente de Diagnóstico",
   diagnostico:     "Se detectó una tarea S563 en estado Running sin avanzar. El plan de orquestación está bloqueado esperando respuesta de SOM que no llegó. El Push Event asociado no fue recibido en el tiempo esperado.",
@@ -39,7 +38,6 @@ const mockRespuestaAgente: RespuestaAgente = {
   escalacion:     false,
 }
 
-// Estado inicial del formulario — tipado con la interface ConsultaAgente
 const estadoInicialFormulario: ConsultaAgente = {
   squad:       "",
   tipoError:   "",
@@ -49,19 +47,14 @@ const estadoInicialFormulario: ConsultaAgente = {
 }
 
 export default function ConsultarPage() {
-  // Estado del formulario
   const [formulario, setFormulario] = useState<ConsultaAgente>(estadoInicialFormulario)
-  // Estado de carga mientras el agente "procesa"
-  const [cargando, setCargando] = useState(false)
-  // Respuesta del agente — null mientras no se consultó
-  const [respuesta, setRespuesta] = useState<RespuestaAgente | null>(null)
+  const [cargando, setCargando]     = useState(false)
+  const [respuesta, setRespuesta]   = useState<RespuestaAgente | null>(null)
 
-  // Actualiza un campo del formulario sin tocar los demás
   function actualizarCampo(campo: keyof ConsultaAgente, valor: string) {
     setFormulario(prev => ({ ...prev, [campo]: valor }))
   }
 
-  // Valida que los campos obligatorios estén completos
   function formularioValido(): boolean {
     return (
       formulario.squad       !== "" &&
@@ -71,37 +64,16 @@ export default function ConsultarPage() {
     )
   }
 
-  // Simula la consulta al agente con un delay de 2 segundos
-  // En Fase 3 esto llama a /api/agent con los datos del formulario
+  // Usa mock mientras Gemini API no está disponible
+  // Para conectar Gemini real: reemplazar por llamada a /api/agent
   async function consultarAgente() {
     if (!formularioValido()) return
     setCargando(true)
     setRespuesta(null)
-
-    try {
-      // Llamada real al endpoint que conecta con Gemini
-      const response = await fetch("/api/agent", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(formulario),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`)
-      }
-
-      const data = await response.json() as RespuestaAgente
-      setRespuesta(data)
-
-    } catch (error) {
-      console.error("Error consultando el agente:", error)
-      // Si falla, mostramos la respuesta mock como fallback
-      setRespuesta(mockRespuestaAgente)
-    } finally {
-      setCargando(false)
-    }
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    setRespuesta(mockRespuestaAgente)
+    setCargando(false)
   }
-  
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -246,7 +218,6 @@ export default function ConsultarPage() {
 
       {/* ── Columna derecha: Respuesta del agente ── */}
       <div className="space-y-4">
-        {/* Estado vacío — antes de consultar */}
         {!respuesta && !cargando && (
           <Card>
             <Card.Content>
@@ -270,7 +241,6 @@ export default function ConsultarPage() {
           </Card>
         )}
 
-        {/* Estado de carga */}
         {cargando && (
           <Card>
             <Card.Content>
@@ -284,11 +254,8 @@ export default function ConsultarPage() {
           </Card>
         )}
 
-        {/* Respuesta del agente */}
         {respuesta && (
           <div className="space-y-4">
-
-            {/* Header de respuesta */}
             <Card>
               <Card.Content>
                 <div className="flex items-center justify-between mb-3">
@@ -308,7 +275,6 @@ export default function ConsultarPage() {
               </Card.Content>
             </Card>
 
-            {/* Causa raíz */}
             <Card>
               <Card.Header>
                 <Card.Title>Causa raíz</Card.Title>
@@ -320,7 +286,6 @@ export default function ConsultarPage() {
               </Card.Content>
             </Card>
 
-            {/* Pasos de resolución */}
             <Card>
               <Card.Header>
                 <Card.Title>Pasos de resolución</Card.Title>
@@ -349,7 +314,6 @@ export default function ConsultarPage() {
               </Card.Content>
             </Card>
 
-            {/* Comandos sugeridos */}
             {respuesta.comandosSugeridos.length > 0 && (
               <Card>
                 <Card.Header>
@@ -373,7 +337,6 @@ export default function ConsultarPage() {
                 </Card.Content>
               </Card>
             )}
-
           </div>
         )}
       </div>
