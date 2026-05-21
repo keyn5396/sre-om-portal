@@ -5,7 +5,7 @@
  * Arma el prompt estructurado con el contexto del problema
  * y devuelve una respuesta tipada del agente.
  *
- * En Fase 5 este contexto se enriquece con datos reales de Salesforce.
+ * El prompt está basado en el agente QA Salesforce OM real del equipo.
  */
 
 import type { ConsultaAgente, RespuestaAgente } from "@/types/agent"
@@ -13,40 +13,48 @@ import type { ConsultaAgente, RespuestaAgente } from "@/types/agent"
 // URL base de la API de Gemini
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
-// Construye el prompt estructurado que le mandamos al agente
-// El formato importa mucho — le decimos exactamente cómo responder
+// Construye el prompt estructurado basado en el agente QA Salesforce OM
 function construirPrompt(consulta: ConsultaAgente): string {
   return `
-Sos el agente coordinador del sistema SRE de Order Management en Salesforce.
-Tu rol es analizar problemas de orquestación de órdenes y dar diagnósticos precisos.
+Eres un Agente Coordinador de Soporte QA especializado en Salesforce Order Management, SFI/Vlocity, descomposición de productos, assetización y planes de orquestación.
 
-CONTEXTO DEL PROBLEMA:
+Tu objetivo es ayudar al equipo a diagnosticar errores, analizar historias de usuario, consultar documentación técnica y orientar validaciones paso a paso dentro de Salesforce OM.
+
+ARQUITECTURA:
+- Identificás si se trata de un error, historia de usuario, duda técnica o solicitud de documentación
+- Clasificás errores por categoría: Descomposición, Mapping, Orquestación, Integración, Assetización, Condiciones, Datos de orden, Vendor externo o Configuración
+- Usás prioridad de fuentes: documentación técnica > base de errores conocidos > información del usuario > conocimiento general
+
+CONTEXTO DE LA CONSULTA:
 - Squad: ${consulta.squad}
 - Tipo de error: ${consulta.tipoError}
 - Severidad: ${consulta.severidad}
 - Número de orden: ${consulta.numeroOrden || "No especificado"}
 - Descripción: ${consulta.descripcion}
 
-CONOCIMIENTO DEL SISTEMA:
-- Los planes de orquestación tienen tareas (S563, S564, S591, S298, S203)
-- Las tareas pueden estar en: Completed, Running, Failed, Fatally Failed, Skipped
-- Los sistemas integrados son: SOM, CBS, Huawei, SRI
-- Los Push Events sincronizan el estado entre sistemas
+CONOCIMIENTO DEL SISTEMA OM:
+- Planes de orquestación con tareas: S563, S564, S591, S298, S203
+- Estados de tareas: Completed, Running, Failed, Fatally Failed, Skipped
+- Sistemas integrados: SOM, CBS, Huawei, SRI, Nokia, NRED
 - Variables clave: XOM_IS_ERROR_SOM, XOM_SUBGESTION, XOM_PEVC
+- Push Events sincronizan estado entre sistemas
+- Rollback se activa condicionalmente con S591_CancelProvision
 
-INSTRUCCIONES:
-Analizá el problema y respondé ÚNICAMENTE con un JSON válido con esta estructura exacta:
+INSTRUCCIÓN CRÍTICA:
+Analizá el problema y respondé ÚNICAMENTE con un JSON válido con esta estructura exacta, sin texto adicional, sin backticks, sin explicaciones:
 {
-  "agenteDerivado": "nombre del sub-agente que toma el caso (Diagnóstico, Resolución o Escalation)",
-  "diagnostico": "análisis claro del problema en 2-3 oraciones",
-  "causaRaiz": "causa técnica específica del problema",
-  "pasosResolucion": ["paso 1", "paso 2", "paso 3"],
-  "comandosSugeridos": ["comando o endpoint relevante"],
+  "agenteDerivado": "Diagnóstico | Resolución | Escalation",
+  "diagnostico": "resumen del problema en 2-3 oraciones simples",
+  "causaRaiz": "causa técnica probable con categoría: Orquestación/Integración/Mapping/etc",
+  "pasosResolucion": [
+    "paso 1 concreto",
+    "paso 2 concreto",
+    "paso 3 concreto"
+  ],
+  "comandosSugeridos": ["query SOQL o endpoint si aplica"],
   "tiempoEstimado": "estimación en minutos",
   "escalacion": false
 }
-
-Respondé SOLO con el JSON, sin texto adicional, sin backticks, sin explicaciones.
 `
 }
 
@@ -68,7 +76,7 @@ export async function consultarAgente(consulta: ConsultaAgente): Promise<Respues
         parts: [{ text: prompt }]
       }],
       generationConfig: {
-        temperature:     0.2,  // baja temperatura = respuestas más consistentes y precisas
+        temperature:     0.2,
         maxOutputTokens: 1000,
       }
     })
