@@ -77,10 +77,31 @@ export default function ConsultarPage() {
     if (!formularioValido()) return
     setCargando(true)
     setRespuesta(null)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    setRespuesta(mockRespuestaAgente)
-    setCargando(false)
+
+    try {
+      // Llamada real al endpoint que conecta con Gemini
+      const response = await fetch("/api/agent", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(formulario),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json() as RespuestaAgente
+      setRespuesta(data)
+
+    } catch (error) {
+      console.error("Error consultando el agente:", error)
+      // Si falla, mostramos la respuesta mock como fallback
+      setRespuesta(mockRespuestaAgente)
+    } finally {
+      setCargando(false)
+    }
   }
+  
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
