@@ -12,6 +12,8 @@ export interface ConsultaAgente {
   severidad:   string
   numeroOrden: string
   descripcion: string
+  tipoProblema: string
+  nombreUsuario: string
 }
 
 // La respuesta estructurada que devuelve el agente
