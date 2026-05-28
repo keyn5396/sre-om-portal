@@ -9,7 +9,7 @@
 export interface ConsultaAgente {
   iniciativa:  string   // reemplaza "squad" — las iniciativas son estables en el tiempo
   tipoError:   string
-  severidad:   string
+  severidad:    "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
   numeroOrden: string
   descripcion: string
   tipoProblema: string
