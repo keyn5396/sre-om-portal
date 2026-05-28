@@ -32,7 +32,7 @@ CONSULTA DEL QA
 ════════════════════════════════════════
 
 - Iniciativa: ${consulta.iniciativa}
-- Tipo de problema: ${consulta.tipoProblema}
+- Tipo de problema: ${consulta.tipoError}
 - Severidad: ${consulta.severidad}
 - Número de orden: ${consulta.numeroOrden ?? 'No proporcionado'}
 - Descripción: ${consulta.descripcion}
@@ -61,7 +61,7 @@ export async function consultarAgente(
   consulta: ConsultaAgente
 ): Promise<RespuestaAgente> {
   const contextoRAG = seleccionarContextoRelevante(
-    consulta.tipoProblema,
+    consulta.tipoError,
     consulta.descripcion
   )
   const prompt  = construirPrompt(consulta, contextoRAG)

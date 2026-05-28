@@ -1,23 +1,21 @@
 /**
  * types/agent.ts
- *
- * Tipos TypeScript para las consultas al agente Gemini.
- * ÚNICO lugar de verdad — gemini.ts y route.ts importan desde acá.
+ * ÚNICO lugar de verdad para los tipos del agente.
  */
 
 export interface ConsultaAgente {
   iniciativa:    string
-  tipoProblema:  string                              // nombre unificado
+  tipoError:     string    // nombre usado en route.ts y consultar/page.tsx
   severidad:     "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
   numeroOrden?:  string
   descripcion:   string
-  nombreUsuario: string
+  nombreUsuario?: string   // opcional — se agrega en Fase 4 con autenticación
 }
 
 export interface RespuestaAgente {
   agenteDerivado:    string
   diagnostico:       string
-  causaRaiz:         string    // nombre unificado (antes causaProbable en gemini.ts)
+  causaRaiz:         string
   pasosResolucion:   string[]
   comandosSugeridos: string[]
   tiempoEstimado:    string
