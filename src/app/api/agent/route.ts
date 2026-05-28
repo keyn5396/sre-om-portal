@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as ConsultaAgente
 
     // Validación de campos obligatorios
-    if (!body.squad || !body.tipoError || !body.severidad || !body.descripcion) {
+    if (!body.iniciativa || !body.tipoError || !body.severidad || !body.descripcion) {
       return NextResponse.json(
         { error: "Faltan campos obligatorios" },
         { status: 400 }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       .from("cases")
       .insert({
         case_number:    generarNumeroCaso(),
-        squad:          body.squad,
+        squad:          body.iniciativa,
         tipo:           body.tipoError,
         severidad:      body.severidad.toLowerCase(),
         estado:         "open",

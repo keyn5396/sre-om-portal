@@ -1,0 +1,1286 @@
+From 4ca69fec9ce2c1d70eb2c8694c38ab4cc7b55f4a Mon Sep 17 00:00:00 2001
+From: OM Agent Bot <sre-portal@qaura.dev>
+Date: Thu, 28 May 2026 20:19:57 +0000
+Subject: [PATCH] feat(dashboard): categoria 2 feedback tribu QA
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Reemplazar 'squad' por 'iniciativa' en todo el sistema (más estable en el tiempo)
+- KPI cards clickeables filtran tabla de casos en tiempo real
+- MTTR movido a card secundaria colapsable con desglose por severidad
+- Bugs relacionados reemplazan espacio del MTTR como nueva sección
+- 'Actividad reciente' reemplazado por 'Status OM en UAT' (ok/degradado/down)
+- Columna 'Iniciativa' agregada a tabla de casos recientes
+- IDs de casos y casos vinculados en bugs son hipervínculos clickeables
+- Indicador visual del filtro activo con opción de limpiar
+- Nuevos tipos: BugRelacionado, StatusAmbienteUAT
+- Mock data actualizada: mockBugsRelacionados, mockStatusUAT
+---
+ package-lock.json          | 116 +----------
+ package.json               |   2 +-
+ src/app/api/agent/route.ts |   4 +-
+ src/app/consultar/page.tsx |  16 +-
+ src/app/historial/page.tsx |   6 +-
+ src/app/page.tsx           | 414 ++++++++++++++++++++++++++-----------
+ src/constants/index.ts     |  95 +++++++--
+ src/lib/gemini.ts          |   2 +-
+ src/types/agent.ts         |   2 +-
+ src/types/case.ts          |  23 ++-
+ 10 files changed, 408 insertions(+), 272 deletions(-)
+
+diff --git a/package-lock.json b/package-lock.json
+index 32fb61b..dc8158a 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -21,7 +21,7 @@
+         "eslint": "^9",
+         "eslint-config-next": "16.2.6",
+         "tailwindcss": "^4",
+-        "typescript": "^5"
++        "typescript": "^5.9.3"
+       }
+     },
+     "node_modules/@alloc/quick-lru": {
+@@ -613,9 +613,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -632,9 +629,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -651,9 +645,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -670,9 +661,6 @@
+       "cpu": [
+         "riscv64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -689,9 +677,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -708,9 +693,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -727,9 +709,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -746,9 +725,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -765,9 +741,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -790,9 +763,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -815,9 +785,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -840,9 +807,6 @@
+       "cpu": [
+         "riscv64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -865,9 +829,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -890,9 +851,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -915,9 +873,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -940,9 +895,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1158,9 +1110,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1177,9 +1126,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1196,9 +1142,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1215,9 +1158,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1540,9 +1480,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1560,9 +1497,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1580,9 +1514,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1600,9 +1531,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2153,9 +2081,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2170,9 +2095,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2187,9 +2109,6 @@
+         "loong64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2204,9 +2123,6 @@
+         "loong64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2221,9 +2137,6 @@
+         "ppc64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2238,9 +2151,6 @@
+         "riscv64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2255,9 +2165,6 @@
+         "riscv64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2272,9 +2179,6 @@
+         "s390x"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2289,9 +2193,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2306,9 +2207,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -4940,9 +4838,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -4964,9 +4859,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -4988,9 +4880,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -5012,9 +4901,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+diff --git a/package.json b/package.json
+index d55b66b..5d0e09e 100644
+--- a/package.json
++++ b/package.json
+@@ -22,6 +22,6 @@
+     "eslint": "^9",
+     "eslint-config-next": "16.2.6",
+     "tailwindcss": "^4",
+-    "typescript": "^5"
++    "typescript": "^5.9.3"
+   }
+ }
+diff --git a/src/app/api/agent/route.ts b/src/app/api/agent/route.ts
+index 26c2584..b32dc57 100644
+--- a/src/app/api/agent/route.ts
++++ b/src/app/api/agent/route.ts
+@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
+     const body = await request.json() as ConsultaAgente
+ 
+     // Validación de campos obligatorios
+-    if (!body.squad || !body.tipoError || !body.severidad || !body.descripcion) {
++    if (!body.iniciativa || !body.tipoError || !body.severidad || !body.descripcion) {
+       return NextResponse.json(
+         { error: "Faltan campos obligatorios" },
+         { status: 400 }
+@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
+       .from("cases")
+       .insert({
+         case_number:    generarNumeroCaso(),
+-        squad:          body.squad,
++        squad:          body.iniciativa,
+         tipo:           body.tipoError,
+         severidad:      body.severidad.toLowerCase(),
+         estado:         "open",
+diff --git a/src/app/consultar/page.tsx b/src/app/consultar/page.tsx
+index 8af5149..0b8a445 100644
+--- a/src/app/consultar/page.tsx
++++ b/src/app/consultar/page.tsx
+@@ -14,7 +14,7 @@ import { useState } from "react"
+ import { Card } from "@/components/ui/Card"
+ import { Button } from "@/components/ui/Button"
+ import { Badge } from "@/components/ui/Badge"
+-import { SQUADS, TIPOS_ERROR, SEVERIDADES } from "@/constants"
++import { INICIATIVAS, TIPOS_ERROR, SEVERIDADES } from "@/constants"
+ import type { ConsultaAgente, RespuestaAgente } from "@/types/agent"
+ import type { BadgeVariant } from "@/types/case"
+ 
+@@ -39,7 +39,7 @@ const mockRespuestaAgente: RespuestaAgente = {
+ }
+ 
+ const estadoInicialFormulario: ConsultaAgente = {
+-  squad:       "",
++  iniciativa:  "",
+   tipoError:   "",
+   severidad:   "",
+   numeroOrden: "",
+@@ -57,7 +57,7 @@ export default function ConsultarPage() {
+ 
+   function formularioValido(): boolean {
+     return (
+-      formulario.squad       !== "" &&
++      formulario.iniciativa  !== "" &&
+       formulario.tipoError   !== "" &&
+       formulario.severidad   !== "" &&
+       formulario.descripcion !== ""
+@@ -90,11 +90,11 @@ export default function ConsultarPage() {
+             {/* Squad */}
+             <div>
+               <label className="block text-xs text-surface-400 mb-1.5">
+-                Squad <span className="text-red-400">*</span>
++                Iniciativa <span className="text-red-400">*</span>
+               </label>
+               <select
+-                value={formulario.squad}
+-                onChange={e => actualizarCampo("squad", e.target.value)}
++                value={formulario.iniciativa}
++                onChange={e => actualizarCampo("iniciativa", e.target.value)}
+                 className="
+                   w-full px-3 py-2
+                   bg-surface-800 border border-surface-700
+@@ -103,8 +103,8 @@ export default function ConsultarPage() {
+                   transition-colors
+                 "
+               >
+-                <option value="">Seleccioná un squad</option>
+-                {SQUADS.map(s => (
++                <option value="">Seleccioná una iniciativa</option>
++                {INICIATIVAS.map(s => (
+                   <option key={s} value={s}>{s}</option>
+                 ))}
+               </select>
+diff --git a/src/app/historial/page.tsx b/src/app/historial/page.tsx
+index c39f06d..80d2ef5 100644
+--- a/src/app/historial/page.tsx
++++ b/src/app/historial/page.tsx
+@@ -25,7 +25,7 @@ export default function HistorialPage() {
+       busqueda === "" ||
+       caso.id.toLowerCase().includes(busqueda.toLowerCase()) ||
+       caso.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
+-      caso.squad.toLowerCase().includes(busqueda.toLowerCase())
++      caso.iniciativa.toLowerCase().includes(busqueda.toLowerCase())
+ 
+     const coincideSeveridad =
+       filtroSeveridad === "todas" ||
+@@ -118,7 +118,7 @@ export default function HistorialPage() {
+             <table className="w-full">
+               <thead>
+                 <tr className="border-b border-surface-800">
+-                  {["ID", "Squad", "Tipo", "Orden", "Severidad", "Estado", "Agente", "Hace"].map(col => (
++                  {["ID", "Iniciativa", "Tipo", "Orden", "Severidad", "Estado", "Agente", "Hace"].map(col => (
+                     <th
+                       key={col}
+                       className="text-left text-xs text-surface-500 font-medium px-6 py-3"
+@@ -141,7 +141,7 @@ export default function HistorialPage() {
+                     </td>
+                     <td className="px-6 py-3">
+                       <span className="text-xs text-surface-300">
+-                        {caso.squad}
++                        {caso.iniciativa}
+                       </span>
+                     </td>
+                     <td className="px-6 py-3">
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 4d74ca6..cd6f463 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -1,40 +1,61 @@
+ /**
+- * page.tsx — Dashboard principal
++ * page.tsx — Dashboard principal (v2)
+  *
+- * Primera pantalla del portal SRE OM Operations.
+- * Muestra el estado general del sistema de un vistazo:
+- * KPIs, casos recientes y estado de los agentes.
++ * Responsabilidad: Vista de estado general del sistema SRE OM Operations.
++ * 
++ * Cambios v2 (feedback reuniones de tribu):
++ * - "Squad" renombrado a "Iniciativa" en tabla de casos
++ * - KPI de MTTR movido a posición secundaria (colapsable)
++ * - Bugs relacionados reemplazan el espacio del MTTR
++ * - "Actividad reciente" reemplazado por "Status OM en UAT"
++ * - Status cards son botones que filtran la tabla en tiempo real
++ * - Cada caso de la tabla es un hipervínculo a su detalle
++ * - Columna "Iniciativa" agregada a casos recientes
+  *
+- * Todos los datos son mock por ahora — se conectan a Supabase en Fase 4.
++ * Es un Client Component porque maneja estado local de filtros.
++ * En Fase 4 se conecta a Supabase para datos reales.
+  */
+ 
++"use client"
++
++import Link from "next/link"
++import { useState } from "react"
+ import { Badge } from "@/components/ui/Badge"
+ import { Card } from "@/components/ui/Card"
+-import { mockCasos, mockKpis } from "@/constants"
+-import type { CasoSRE } from "@/types/case"
++import { mockCasos, mockKpis, mockBugsRelacionados, mockStatusUAT } from "@/constants"
++import type { CasoSRE, BadgeVariant } from "@/types/case"
++
++// ─── Tipos locales ───────────────────────────────────────────────────────────
++
++// Filtro de estado activo en la tabla — null = mostrar todos
++type FiltroEstado = BadgeVariant | null
+ 
+-// Datos de los 4 KPI cards — estructura, ícono, valor y descripción
++// ─── Datos de los KPI cards superiores ───────────────────────────────────────
++// MTTR ya no está acá — pasó a la sección secundaria colapsable
+ const kpiCards = [
+-  {
+-    titulo:      "MTTR Promedio",
+-    valor:       mockKpis.mttr,
+-    descripcion: "Mean Time To Resolution",
+-    icono:       "⏱",
+-    color:       "text-primary-400",
+-  },
+   {
+     titulo:      "Casos abiertos",
+     valor:       mockKpis.casosAbiertos,
+     descripcion: "Requieren atención",
+     icono:       "🔴",
+     color:       "text-red-400",
++    filtro:      "open" as FiltroEstado,
++  },
++  {
++    titulo:      "En progreso",
++    valor:       mockCasos.filter(c => c.estado === "inProgress").length,
++    descripcion: "Siendo trabajados ahora",
++    icono:       "🟡",
++    color:       "text-orange-400",
++    filtro:      "inProgress" as FiltroEstado,
+   },
+   {
+     titulo:      "Resueltos hoy",
+     valor:       mockKpis.resueltosHoy,
+-    descripcion: "Casos cerrados en las últimas 24hs",
++    descripcion: "Cerrados en las últimas 24hs",
+     icono:       "✅",
+     color:       "text-green-400",
++    filtro:      "resolved" as FiltroEstado,
+   },
+   {
+     titulo:      "Consultas al agente",
+@@ -42,120 +63,176 @@ const kpiCards = [
+     descripcion: "Esta semana",
+     icono:       "🤖",
+     color:       "text-blue-400",
++    filtro:      null,   // no filtra — solo informativo
+   },
+ ]
+ 
+-// Estado de cada sub-agente del sistema Gemini
+-const estadoAgentes = [
+-  { nombre: "Coordinador",  estado: "Activo",     color: "bg-green-500" },
+-  { nombre: "Diagnóstico",  estado: "Activo",     color: "bg-green-500" },
+-  { nombre: "Resolución",   estado: "Activo",     color: "bg-green-500" },
+-  { nombre: "Escalation",   estado: "En espera",  color: "bg-yellow-500" },
+-]
++// ─── Mapa de colores para el estado del ambiente UAT ─────────────────────────
++const colorEstadoUAT: Record<string, { dot: string; label: string; text: string }> = {
++  ok:       { dot: "bg-green-500",  label: "bg-green-500/10 text-green-400 border border-green-500/20",  text: "OK"       },
++  degradado:{ dot: "bg-yellow-400", label: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20", text: "DEGRADADO" },
++  down:     { dot: "bg-red-500",    label: "bg-red-500/10 text-red-400 border border-red-500/20",        text: "DOWN"     },
++}
+ 
++// ─── Componente principal ─────────────────────────────────────────────────────
+ export default function DashboardPage() {
++
++  // Estado local: qué filtro de estado está activo en la tabla
++  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>(null)
++
++  // Estado local: si el panel MTTR está expandido
++  const [mttrExpandido, setMttrExpandido] = useState(false)
++
++  // Casos filtrados según el botón KPI que se haya clickeado
++  const casosFiltrados: CasoSRE[] = filtroEstado
++    ? mockCasos.filter(c => c.estado === filtroEstado)
++    : mockCasos
++
++  // Función que alterna el filtro — si se clickea el mismo dos veces, limpia
++  function toggleFiltro(filtro: FiltroEstado) {
++    if (filtro === null) return           // KPI sin filtro (ej: consultas al agente)
++    setFiltroEstado(prev => prev === filtro ? null : filtro)
++  }
++
+   return (
+     <div className="space-y-6">
+ 
+-      {/* ── Sección 1: KPI Cards ── */}
++      {/* ── Sección 1: KPI Cards — clickeables para filtrar la tabla ── */}
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+-        {kpiCards.map((kpi) => (
+-          <Card key={kpi.titulo}>
++        {kpiCards.map((kpi) => {
++          const estaActivo = filtroEstado === kpi.filtro && kpi.filtro !== null
++          return (
++            <button
++              key={kpi.titulo}
++              onClick={() => toggleFiltro(kpi.filtro)}
++              className={`text-left transition-all duration-150 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50
++                ${kpi.filtro !== null ? "cursor-pointer" : "cursor-default"}
++                ${estaActivo ? "ring-2 ring-primary-500/60 scale-[1.02]" : ""}
++              `}
++              title={kpi.filtro ? `Filtrar por: ${kpi.titulo}` : undefined}
++            >
++              <Card className={`h-full transition-colors ${estaActivo ? "border-primary-500/40" : ""}`}>
++                <Card.Content>
++                  <div className="flex items-start justify-between">
++                    <div>
++                      <p className="text-xs text-surface-500 uppercase tracking-wider mb-1">
++                        {kpi.titulo}
++                      </p>
++                      <p className={`text-3xl font-bold ${kpi.color}`}>
++                        {kpi.valor}
++                      </p>
++                      <p className="text-xs text-surface-500 mt-1">
++                        {kpi.filtro !== null
++                          ? estaActivo ? "▼ Filtrando ahora" : "Click para filtrar"
++                          : kpi.descripcion}
++                      </p>
++                    </div>
++                    <span className="text-2xl">{kpi.icono}</span>
++                  </div>
++                </Card.Content>
++              </Card>
++            </button>
++          )
++        })}
++      </div>
++
++      {/* ── Sección 2: MTTR secundario (colapsable) + Bugs relacionados ── */}
++      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
++
++        {/* MTTR — colapsado por defecto, menos protagonismo */}
++        <button
++          onClick={() => setMttrExpandido(p => !p)}
++          className="lg:col-span-1 text-left"
++        >
++          <Card className="h-full hover:border-surface-500 transition-colors cursor-pointer">
+             <Card.Content>
+-              <div className="flex items-start justify-between">
++              <div className="flex items-center justify-between">
+                 <div>
+                   <p className="text-xs text-surface-500 uppercase tracking-wider mb-1">
+-                    {kpi.titulo}
++                    MTTR Promedio
+                   </p>
+-                  <p className={`text-3xl font-bold ${kpi.color}`}>
+-                    {kpi.valor}
++                  <p className="text-2xl font-bold text-primary-400">
++                    {mockKpis.mttr}
+                   </p>
+                   <p className="text-xs text-surface-500 mt-1">
+-                    {kpi.descripcion}
++                    Mean Time To Resolution
+                   </p>
+                 </div>
+-                <span className="text-2xl">{kpi.icono}</span>
++                <span className="text-xl text-surface-500">
++                  {mttrExpandido ? "▲" : "▼"}
++                </span>
+               </div>
++              {mttrExpandido && (
++                <div className="mt-3 pt-3 border-t border-surface-700 space-y-1">
++                  <p className="text-xs text-surface-400">Críticos: <span className="text-red-400 font-medium">38 min</span></p>
++                  <p className="text-xs text-surface-400">High: <span className="text-orange-400 font-medium">24 min</span></p>
++                  <p className="text-xs text-surface-400">Medium: <span className="text-yellow-400 font-medium">15 min</span></p>
++                </div>
++              )}
+             </Card.Content>
+           </Card>
+-        ))}
+-      </div>
+-
+-      {/* ── Sección 2: Tabla de casos + Estado de agentes ── */}
+-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
++        </button>
+ 
+-        {/* Tabla de casos recientes — ocupa 2/3 del ancho */}
+-        <div className="lg:col-span-2">
++        {/* Bugs relacionados — ocupa las 3/4 del ancho */}
++        <div className="lg:col-span-3">
+           <Card>
+             <Card.Header>
+-              <Card.Title>Casos recientes</Card.Title>
++              <Card.Title>🐛 Bugs relacionados</Card.Title>
+               <span className="text-xs text-surface-500">
+-                Últimas 24 horas
++                Vinculados a casos SRE activos
+               </span>
+             </Card.Header>
+             <Card.Content className="p-0">
+               <table className="w-full">
+                 <thead>
+                   <tr className="border-b border-surface-800">
+-                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">
+-                      ID
+-                    </th>
+-                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">
+-                      Squad
+-                    </th>
+-                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">
+-                      Tipo
+-                    </th>
+-                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">
+-                      Severidad
+-                    </th>
+-                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">
+-                      Estado
+-                    </th>
+-                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">
+-                      Agente
+-                    </th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-5 py-3">Bug</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-5 py-3">Título</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-5 py-3">Caso SRE</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-5 py-3">Severidad</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-5 py-3">Estado</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-5 py-3">Reportado</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+-                  {mockCasos.map((caso: CasoSRE) => (
++                  {mockBugsRelacionados.map((bug) => (
+                     <tr
+-                      key={caso.id}
++                      key={bug.id}
+                       className="border-b border-surface-800/50 hover:bg-surface-800/30 transition-colors"
+                     >
+-                      <td className="px-6 py-3">
+-                        <span className="text-xs font-mono text-primary-400">
+-                          {caso.id}
+-                        </span>
++                      <td className="px-5 py-3">
++                        <span className="text-xs font-mono text-orange-400">{bug.id}</span>
+                       </td>
+-                      <td className="px-6 py-3">
+-                        <span className="text-xs text-surface-300">
+-                          {caso.squad}
++                      <td className="px-5 py-3">
++                        <span className="text-xs text-surface-300 max-w-48 truncate block">
++                          {bug.titulo}
+                         </span>
+                       </td>
+-                      <td className="px-6 py-3">
+-                        <span className="text-xs text-surface-400 max-w-32 truncate block">
+-                          {caso.tipo}
+-                        </span>
++                      <td className="px-5 py-3">
++                        {/* Caso SRE vinculado — hipervínculo */}
++                        <Link
++                          href={`/casos/${bug.casoId}`}
++                          className="text-xs font-mono text-primary-400 hover:text-primary-300 underline underline-offset-2"
++                        >
++                          {bug.casoId}
++                        </Link>
+                       </td>
+-                      <td className="px-6 py-3">
+-                        <Badge variant={caso.severidad}>
+-                          {caso.severidad.toUpperCase()}
+-                        </Badge>
++                      <td className="px-5 py-3">
++                        <Badge variant={bug.severidad}>{bug.severidad.toUpperCase()}</Badge>
+                       </td>
+-                      <td className="px-6 py-3">
+-                        <Badge variant={caso.estado}>
+-                          {caso.estado === "open"       ? "Abierto"     :
+-                           caso.estado === "resolved"   ? "Resuelto"    :
+-                           caso.estado === "inProgress" ? "En progreso" :
+-                           caso.estado === "escalated"  ? "Escalado"    :
+-                           caso.estado}
++                      <td className="px-5 py-3">
++                        <Badge variant={
++                          bug.estado === "open"       ? "open"       :
++                          bug.estado === "inProgress" ? "inProgress" :
++                          "resolved"
++                        }>
++                          {bug.estado === "open"       ? "Abierto"     :
++                           bug.estado === "inProgress" ? "En progreso" :
++                           "Cerrado"}
+                         </Badge>
+                       </td>
+-                      <td className="px-6 py-3">
+-                        <span className="text-xs text-surface-400">
+-                          {caso.agente}
+-                        </span>
++                      <td className="px-5 py-3">
++                        <span className="text-xs text-surface-500">{bug.reportadoPor}</span>
+                       </td>
+                     </tr>
+                   ))}
+@@ -164,56 +241,145 @@ export default function DashboardPage() {
+             </Card.Content>
+           </Card>
+         </div>
++      </div>
+ 
+-        {/* Panel de estado de agentes — ocupa 1/3 del ancho */}
+-        <div className="space-y-4">
++      {/* ── Sección 3: Tabla de casos + Status OM en UAT ── */}
++      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
++
++        {/* Tabla de casos recientes — ocupa 2/3 del ancho */}
++        <div className="lg:col-span-2">
+           <Card>
+             <Card.Header>
+-              <Card.Title>Estado de agentes</Card.Title>
+-            </Card.Header>
+-            <Card.Content>
+-              <div className="space-y-3">
+-                {estadoAgentes.map((agente) => (
+-                  <div
+-                    key={agente.nombre}
+-                    className="flex items-center justify-between py-2 border-b border-surface-800 last:border-0"
++              <div className="flex items-center gap-3">
++                <Card.Title>Casos recientes</Card.Title>
++                {filtroEstado && (
++                  // Indicador del filtro activo — click para limpiar
++                  <button
++                    onClick={() => setFiltroEstado(null)}
++                    className="flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 transition-colors"
+                   >
+-                    <div className="flex items-center gap-2">
+-                      <div className={`w-2 h-2 rounded-full ${agente.color}`} />
+-                      <span className="text-sm text-surface-300">
+-                        {agente.nombre}
+-                      </span>
+-                    </div>
+-                    <span className="text-xs text-surface-500">
+-                      {agente.estado}
+-                    </span>
+-                  </div>
+-                ))}
++                    <Badge variant={filtroEstado}>
++                      {filtroEstado === "open"       ? "Abierto"     :
++                       filtroEstado === "inProgress" ? "En progreso" :
++                       filtroEstado === "resolved"   ? "Resuelto"    :
++                       filtroEstado}
++                    </Badge>
++                    <span className="ml-1">✕ Limpiar filtro</span>
++                  </button>
++                )}
+               </div>
++              <span className="text-xs text-surface-500">
++                {casosFiltrados.length} caso{casosFiltrados.length !== 1 ? "s" : ""}
++                {filtroEstado ? " filtrados" : " — últimas 24 horas"}
++              </span>
++            </Card.Header>
++            <Card.Content className="p-0">
++              <table className="w-full">
++                <thead>
++                  <tr className="border-b border-surface-800">
++                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">ID</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">Iniciativa</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">Tipo</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">Severidad</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">Estado</th>
++                    <th className="text-left text-xs text-surface-500 font-medium px-6 py-3">Agente</th>
++                  </tr>
++                </thead>
++                <tbody>
++                  {casosFiltrados.length === 0 ? (
++                    <tr>
++                      <td colSpan={6} className="px-6 py-8 text-center text-xs text-surface-500">
++                        No hay casos con ese estado
++                      </td>
++                    </tr>
++                  ) : (
++                    casosFiltrados.map((caso: CasoSRE) => (
++                      <tr
++                        key={caso.id}
++                        className="border-b border-surface-800/50 hover:bg-surface-800/30 transition-colors"
++                      >
++                        {/* ID del caso como hipervínculo a su detalle */}
++                        <td className="px-6 py-3">
++                          <Link
++                            href={`/casos/${caso.id}`}
++                            className="text-xs font-mono text-primary-400 hover:text-primary-300 underline underline-offset-2 transition-colors"
++                          >
++                            {caso.id}
++                          </Link>
++                        </td>
++                        <td className="px-6 py-3">
++                          <span className="text-xs text-surface-300">{caso.iniciativa}</span>
++                        </td>
++                        <td className="px-6 py-3">
++                          <span className="text-xs text-surface-400 max-w-32 truncate block">{caso.tipo}</span>
++                        </td>
++                        <td className="px-6 py-3">
++                          <Badge variant={caso.severidad}>{caso.severidad.toUpperCase()}</Badge>
++                        </td>
++                        <td className="px-6 py-3">
++                          <Badge variant={caso.estado}>
++                            {caso.estado === "open"       ? "Abierto"     :
++                             caso.estado === "resolved"   ? "Resuelto"    :
++                             caso.estado === "inProgress" ? "En progreso" :
++                             caso.estado === "escalated"  ? "Escalado"    :
++                             caso.estado}
++                          </Badge>
++                        </td>
++                        <td className="px-6 py-3">
++                          <span className="text-xs text-surface-400">{caso.agente}</span>
++                        </td>
++                      </tr>
++                    ))
++                  )}
++                </tbody>
++              </table>
+             </Card.Content>
+           </Card>
++        </div>
+ 
+-          {/* Card de actividad reciente */}
+-          <Card>
++        {/* Panel derecho: Status OM en UAT — reemplaza "Actividad reciente" */}
++        <div>
++          <Card className="h-full">
+             <Card.Header>
+-              <Card.Title>Actividad reciente</Card.Title>
++              <Card.Title>🟢 Status OM en UAT</Card.Title>
++              <span className="text-xs text-surface-500">En vivo</span>
+             </Card.Header>
+             <Card.Content>
+               <div className="space-y-3">
+-                {mockCasos.slice(0, 3).map((caso) => (
+-                  <div key={caso.id} className="flex gap-3">
+-                    <div className="w-1 rounded-full bg-surface-700 flex-shrink-0" />
+-                    <div>
+-                      <p className="text-xs text-surface-300">
+-                        {caso.id} · {caso.squad}
+-                      </p>
+-                      <p className="text-xs text-surface-500 mt-0.5">
+-                        {caso.creadoHace}
+-                      </p>
++                {mockStatusUAT.map((servicio) => {
++                  const estilo = colorEstadoUAT[servicio.estado]
++                  return (
++                    <div
++                      key={servicio.nombre}
++                      className="flex items-start justify-between py-2 border-b border-surface-800 last:border-0"
++                    >
++                      <div className="flex items-start gap-2">
++                        {/* Dot de estado */}
++                        <div className={`w-2 h-2 rounded-full mt-0.5 flex-shrink-0 ${estilo.dot}`} />
++                        <div>
++                          <span className="text-sm text-surface-300 block">
++                            {servicio.nombre}
++                          </span>
++                          {servicio.detalle && (
++                            <span className="text-xs text-surface-500 block mt-0.5">
++                              {servicio.detalle}
++                            </span>
++                          )}
++                        </div>
++                      </div>
++                      {/* Badge de estado */}
++                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ml-2 ${estilo.label}`}>
++                        {estilo.text}
++                      </span>
+                     </div>
+-                  </div>
+-                ))}
++                  )
++                })}
+               </div>
++
++              {/* Última actualización */}
++              <p className="text-xs text-surface-600 mt-4 pt-3 border-t border-surface-800">
++                Actualizado {mockStatusUAT[0].ultimaRevision} · Fuente: Salesforce API
++              </p>
+             </Card.Content>
+           </Card>
+         </div>
+@@ -221,4 +387,4 @@ export default function DashboardPage() {
+       </div>
+     </div>
+   )
+-}
+\ No newline at end of file
++}
+diff --git a/src/constants/index.ts b/src/constants/index.ts
+index e2993f2..2896994 100644
+--- a/src/constants/index.ts
++++ b/src/constants/index.ts
+@@ -2,20 +2,24 @@
+  * constants/index.ts
+  *
+  * Valores constantes del dominio de negocio del portal SRE OM Operations.
+- * Centraliza squads, tipos de error, severidades y datos de ejemplo.
+- * Cuando conectemos Supabase en Fase 4, los mockCases se reemplazan
++ * Centraliza iniciativas, tipos de error, severidades y datos de ejemplo.
++ * Cuando conectemos Supabase en Fase 4, los mock se reemplazan
+  * por datos reales — el resto de constantes se mantiene igual.
++ *
++ * CAMBIO v2: "squad" reemplazado por "iniciativa" — las iniciativas
++ * son estables en el tiempo, los squads son organizativos y rotan.
+  */
+ 
+-import type { BadgeVariant } from "@/types/case"
++import type { BadgeVariant, BugRelacionado, StatusAmbienteUAT } from "@/types/case"
+ 
+-// Squads del proyecto OM
+-export const SQUADS = [
+-  "OM Core",
+-  "OM Provision",
+-  "OM Billing",
+-  "OM Portability",
+-  "OM IPTV",
++// Iniciativas del proyecto OM — más estables que los squads
++export const INICIATIVAS = [
++  "CADOM",
++  "Flow Box",
++  "Portabilidad",
++  "Alta Internet",
++  "IPTV",
++  "TOIP",
+ ] as const
+ 
+ // Tipos de error más frecuentes en Order Management
+@@ -42,7 +46,7 @@ export const SEVERIDADES = [
+ export const mockCasos = [
+   {
+     id:          "OM-2401",
+-    squad:       "OM Provision",
++    iniciativa:  "CADOM",
+     tipo:        "Tarea trabada en Running",
+     severidad:   "critical" as BadgeVariant,
+     estado:      "open" as BadgeVariant,
+@@ -53,7 +57,7 @@ export const mockCasos = [
+   },
+   {
+     id:          "OM-2400",
+-    squad:       "OM IPTV",
++    iniciativa:  "Flow Box",
+     tipo:        "Error en plan de orquestación",
+     severidad:   "high" as BadgeVariant,
+     estado:      "inProgress" as BadgeVariant,
+@@ -64,7 +68,7 @@ export const mockCasos = [
+   },
+   {
+     id:          "OM-2399",
+-    squad:       "OM Billing",
++    iniciativa:  "Alta Internet",
+     tipo:        "Timeout en callback",
+     severidad:   "high" as BadgeVariant,
+     estado:      "resolved" as BadgeVariant,
+@@ -75,7 +79,7 @@ export const mockCasos = [
+   },
+   {
+     id:          "OM-2398",
+-    squad:       "OM Core",
++    iniciativa:  "CADOM",
+     tipo:        "Push event no recibido",
+     severidad:   "medium" as BadgeVariant,
+     estado:      "resolved" as BadgeVariant,
+@@ -86,7 +90,7 @@ export const mockCasos = [
+   },
+   {
+     id:          "OM-2397",
+-    squad:       "OM Portability",
++    iniciativa:  "Portabilidad",
+     tipo:        "Fallo de validación de estado",
+     severidad:   "low" as BadgeVariant,
+     estado:      "resolved" as BadgeVariant,
+@@ -103,4 +107,63 @@ export const mockKpis = {
+   casosAbiertos:    3,
+   resueltosHoy:    12,
+   consultasAgente:  28,
+-}
+\ No newline at end of file
++}
++
++// Bugs relacionados a casos SRE — se conecta a Jira en Fase 5b
++export const mockBugsRelacionados: BugRelacionado[] = [
++  {
++    id:           "BUG-441",
++    casoId:       "OM-2401",
++    titulo:       "S563 no libera lock al reintentar tarea Running",
++    severidad:    "critical",
++    estado:       "open",
++    reportadoPor: "García, M.",
++  },
++  {
++    id:           "BUG-439",
++    casoId:       "OM-2400",
++    titulo:       "Huawei TV 210 retorna 500 en ambiente UAT",
++    severidad:    "high",
++    estado:       "inProgress",
++    reportadoPor: "López, K.",
++  },
++  {
++    id:           "BUG-435",
++    casoId:       "OM-2399",
++    titulo:       "Callback SF timeout intermitente en nodo 3",
++    severidad:    "high",
++    estado:       "closed",
++    reportadoPor: "Ramírez, S.",
++  },
++]
++
++// Estado actual del ambiente UAT — se conecta a Salesforce API en Fase 5
++export const mockStatusUAT: StatusAmbienteUAT[] = [
++  {
++    nombre:         "Orquestador OM",
++    estado:         "degradado",
++    detalle:        "Latencia elevada en S563",
++    ultimaRevision: "hace 5 min",
++  },
++  {
++    nombre:         "Salesforce CRM",
++    estado:         "ok",
++    ultimaRevision: "hace 5 min",
++  },
++  {
++    nombre:         "Integración Huawei",
++    estado:         "down",
++    detalle:        "Sin respuesta desde las 14:30",
++    ultimaRevision: "hace 5 min",
++  },
++  {
++    nombre:         "Integración SOM",
++    estado:         "ok",
++    ultimaRevision: "hace 5 min",
++  },
++  {
++    nombre:         "CBS / SAP",
++    estado:         "ok",
++    ultimaRevision: "hace 5 min",
++  },
++]
+diff --git a/src/lib/gemini.ts b/src/lib/gemini.ts
+index 273818e..26c674a 100644
+--- a/src/lib/gemini.ts
++++ b/src/lib/gemini.ts
+@@ -26,7 +26,7 @@ ARQUITECTURA:
+ - Usás prioridad de fuentes: documentación técnica > base de errores conocidos > información del usuario > conocimiento general
+ 
+ CONTEXTO DE LA CONSULTA:
+-- Squad: ${consulta.squad}
++- Squad: ${consulta.iniciativa}
+ - Tipo de error: ${consulta.tipoError}
+ - Severidad: ${consulta.severidad}
+ - Número de orden: ${consulta.numeroOrden || "No especificado"}
+diff --git a/src/types/agent.ts b/src/types/agent.ts
+index c074811..7604a1e 100644
+--- a/src/types/agent.ts
++++ b/src/types/agent.ts
+@@ -7,7 +7,7 @@
+ 
+ // Lo que el usuario completa en el formulario
+ export interface ConsultaAgente {
+-  squad:       string
++  iniciativa:  string   // reemplaza "squad" — las iniciativas son estables en el tiempo
+   tipoError:   string
+   severidad:   string
+   numeroOrden: string
+diff --git a/src/types/case.ts b/src/types/case.ts
+index 941c9d6..388d41e 100644
+--- a/src/types/case.ts
++++ b/src/types/case.ts
+@@ -20,9 +20,11 @@ export type BadgeVariant =
+   | "neutral"
+ 
+ // Tipo que representa un caso SRE completo
++// "iniciativa" reemplaza a "squad" — las iniciativas son estables en el tiempo,
++// los squads son organizativos y pueden rotar
+ export interface CasoSRE {
+   id:          string
+-  squad:       string
++  iniciativa:  string   // ej: "CADOM", "Flow Box", "Portabilidad"
+   tipo:        string
+   severidad:   BadgeVariant
+   estado:      BadgeVariant
+@@ -38,4 +40,23 @@ export interface KpisDashboard {
+   casosAbiertos:   number
+   resueltosHoy:    number
+   consultasAgente: number
++}
++
++// Tipo para bugs relacionados a casos SRE
++export interface BugRelacionado {
++  id:          string   // ej: "BUG-441"
++  casoId:      string   // ID del caso SRE vinculado
++  titulo:      string
++  severidad:   BadgeVariant
++  estado:      "open" | "closed" | "inProgress"
++  jiraLink?:   string   // opcional — se conecta en Fase 5b
++  reportadoPor: string
++}
++
++// Tipo para el panel de estado del ambiente UAT
++export interface StatusAmbienteUAT {
++  nombre:      string   // ej: "Orquestador OM"
++  estado:      "ok" | "degradado" | "down"
++  detalle?:    string   // mensaje opcional de contexto
++  ultimaRevision: string
+ }
+\ No newline at end of file
+-- 
+2.43.0
+

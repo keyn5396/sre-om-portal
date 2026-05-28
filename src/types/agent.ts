@@ -7,7 +7,7 @@
 
 // Lo que el usuario completa en el formulario
 export interface ConsultaAgente {
-  squad:       string
+  iniciativa:  string   // reemplaza "squad" — las iniciativas son estables en el tiempo
   tipoError:   string
   severidad:   string
   numeroOrden: string

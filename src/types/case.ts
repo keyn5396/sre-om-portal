@@ -20,9 +20,11 @@ export type BadgeVariant =
   | "neutral"
 
 // Tipo que representa un caso SRE completo
+// "iniciativa" reemplaza a "squad" — las iniciativas son estables en el tiempo,
+// los squads son organizativos y pueden rotar
 export interface CasoSRE {
   id:          string
-  squad:       string
+  iniciativa:  string   // ej: "CADOM", "Flow Box", "Portabilidad"
   tipo:        string
   severidad:   BadgeVariant
   estado:      BadgeVariant
@@ -38,4 +40,23 @@ export interface KpisDashboard {
   casosAbiertos:   number
   resueltosHoy:    number
   consultasAgente: number
+}
+
+// Tipo para bugs relacionados a casos SRE
+export interface BugRelacionado {
+  id:          string   // ej: "BUG-441"
+  casoId:      string   // ID del caso SRE vinculado
+  titulo:      string
+  severidad:   BadgeVariant
+  estado:      "open" | "closed" | "inProgress"
+  jiraLink?:   string   // opcional — se conecta en Fase 5b
+  reportadoPor: string
+}
+
+// Tipo para el panel de estado del ambiente UAT
+export interface StatusAmbienteUAT {
+  nombre:      string   // ej: "Orquestador OM"
+  estado:      "ok" | "degradado" | "down"
+  detalle?:    string   // mensaje opcional de contexto
+  ultimaRevision: string
 }

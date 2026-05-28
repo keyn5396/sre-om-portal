@@ -2,20 +2,24 @@
  * constants/index.ts
  *
  * Valores constantes del dominio de negocio del portal SRE OM Operations.
- * Centraliza squads, tipos de error, severidades y datos de ejemplo.
- * Cuando conectemos Supabase en Fase 4, los mockCases se reemplazan
+ * Centraliza iniciativas, tipos de error, severidades y datos de ejemplo.
+ * Cuando conectemos Supabase en Fase 4, los mock se reemplazan
  * por datos reales — el resto de constantes se mantiene igual.
+ *
+ * CAMBIO v2: "squad" reemplazado por "iniciativa" — las iniciativas
+ * son estables en el tiempo, los squads son organizativos y rotan.
  */
 
-import type { BadgeVariant } from "@/types/case"
+import type { BadgeVariant, BugRelacionado, StatusAmbienteUAT } from "@/types/case"
 
-// Squads del proyecto OM
-export const SQUADS = [
-  "OM Core",
-  "OM Provision",
-  "OM Billing",
-  "OM Portability",
-  "OM IPTV",
+// Iniciativas del proyecto OM — más estables que los squads
+export const INICIATIVAS = [
+  "CADOM",
+  "Flow Box",
+  "Portabilidad",
+  "Alta Internet",
+  "IPTV",
+  "TOIP",
 ] as const
 
 // Tipos de error más frecuentes en Order Management
@@ -42,7 +46,7 @@ export const SEVERIDADES = [
 export const mockCasos = [
   {
     id:          "OM-2401",
-    squad:       "OM Provision",
+    iniciativa:  "CADOM",
     tipo:        "Tarea trabada en Running",
     severidad:   "critical" as BadgeVariant,
     estado:      "open" as BadgeVariant,
@@ -53,7 +57,7 @@ export const mockCasos = [
   },
   {
     id:          "OM-2400",
-    squad:       "OM IPTV",
+    iniciativa:  "Flow Box",
     tipo:        "Error en plan de orquestación",
     severidad:   "high" as BadgeVariant,
     estado:      "inProgress" as BadgeVariant,
@@ -64,7 +68,7 @@ export const mockCasos = [
   },
   {
     id:          "OM-2399",
-    squad:       "OM Billing",
+    iniciativa:  "Alta Internet",
     tipo:        "Timeout en callback",
     severidad:   "high" as BadgeVariant,
     estado:      "resolved" as BadgeVariant,
@@ -75,7 +79,7 @@ export const mockCasos = [
   },
   {
     id:          "OM-2398",
-    squad:       "OM Core",
+    iniciativa:  "CADOM",
     tipo:        "Push event no recibido",
     severidad:   "medium" as BadgeVariant,
     estado:      "resolved" as BadgeVariant,
@@ -86,7 +90,7 @@ export const mockCasos = [
   },
   {
     id:          "OM-2397",
-    squad:       "OM Portability",
+    iniciativa:  "Portabilidad",
     tipo:        "Fallo de validación de estado",
     severidad:   "low" as BadgeVariant,
     estado:      "resolved" as BadgeVariant,
@@ -104,3 +108,62 @@ export const mockKpis = {
   resueltosHoy:    12,
   consultasAgente:  28,
 }
+
+// Bugs relacionados a casos SRE — se conecta a Jira en Fase 5b
+export const mockBugsRelacionados: BugRelacionado[] = [
+  {
+    id:           "BUG-441",
+    casoId:       "OM-2401",
+    titulo:       "S563 no libera lock al reintentar tarea Running",
+    severidad:    "critical",
+    estado:       "open",
+    reportadoPor: "García, M.",
+  },
+  {
+    id:           "BUG-439",
+    casoId:       "OM-2400",
+    titulo:       "Huawei TV 210 retorna 500 en ambiente UAT",
+    severidad:    "high",
+    estado:       "inProgress",
+    reportadoPor: "López, K.",
+  },
+  {
+    id:           "BUG-435",
+    casoId:       "OM-2399",
+    titulo:       "Callback SF timeout intermitente en nodo 3",
+    severidad:    "high",
+    estado:       "closed",
+    reportadoPor: "Ramírez, S.",
+  },
+]
+
+// Estado actual del ambiente UAT — se conecta a Salesforce API en Fase 5
+export const mockStatusUAT: StatusAmbienteUAT[] = [
+  {
+    nombre:         "Orquestador OM",
+    estado:         "degradado",
+    detalle:        "Latencia elevada en S563",
+    ultimaRevision: "hace 5 min",
+  },
+  {
+    nombre:         "Salesforce CRM",
+    estado:         "ok",
+    ultimaRevision: "hace 5 min",
+  },
+  {
+    nombre:         "Integración Huawei",
+    estado:         "down",
+    detalle:        "Sin respuesta desde las 14:30",
+    ultimaRevision: "hace 5 min",
+  },
+  {
+    nombre:         "Integración SOM",
+    estado:         "ok",
+    ultimaRevision: "hace 5 min",
+  },
+  {
+    nombre:         "CBS / SAP",
+    estado:         "ok",
+    ultimaRevision: "hace 5 min",
+  },
+]

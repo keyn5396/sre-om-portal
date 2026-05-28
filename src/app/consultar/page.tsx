@@ -14,7 +14,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { Badge } from "@/components/ui/Badge"
-import { SQUADS, TIPOS_ERROR, SEVERIDADES } from "@/constants"
+import { INICIATIVAS, TIPOS_ERROR, SEVERIDADES } from "@/constants"
 import type { ConsultaAgente, RespuestaAgente } from "@/types/agent"
 import type { BadgeVariant } from "@/types/case"
 
@@ -39,7 +39,7 @@ const mockRespuestaAgente: RespuestaAgente = {
 }
 
 const estadoInicialFormulario: ConsultaAgente = {
-  squad:       "",
+  iniciativa:  "",
   tipoError:   "",
   severidad:   "",
   numeroOrden: "",
@@ -57,7 +57,7 @@ export default function ConsultarPage() {
 
   function formularioValido(): boolean {
     return (
-      formulario.squad       !== "" &&
+      formulario.iniciativa  !== "" &&
       formulario.tipoError   !== "" &&
       formulario.severidad   !== "" &&
       formulario.descripcion !== ""
@@ -90,11 +90,11 @@ export default function ConsultarPage() {
             {/* Squad */}
             <div>
               <label className="block text-xs text-surface-400 mb-1.5">
-                Squad <span className="text-red-400">*</span>
+                Iniciativa <span className="text-red-400">*</span>
               </label>
               <select
-                value={formulario.squad}
-                onChange={e => actualizarCampo("squad", e.target.value)}
+                value={formulario.iniciativa}
+                onChange={e => actualizarCampo("iniciativa", e.target.value)}
                 className="
                   w-full px-3 py-2
                   bg-surface-800 border border-surface-700
@@ -103,8 +103,8 @@ export default function ConsultarPage() {
                   transition-colors
                 "
               >
-                <option value="">Seleccioná un squad</option>
-                {SQUADS.map(s => (
+                <option value="">Seleccioná una iniciativa</option>
+                {INICIATIVAS.map(s => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>

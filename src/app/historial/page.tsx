@@ -25,7 +25,7 @@ export default function HistorialPage() {
       busqueda === "" ||
       caso.id.toLowerCase().includes(busqueda.toLowerCase()) ||
       caso.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
-      caso.squad.toLowerCase().includes(busqueda.toLowerCase())
+      caso.iniciativa.toLowerCase().includes(busqueda.toLowerCase())
 
     const coincideSeveridad =
       filtroSeveridad === "todas" ||
@@ -118,7 +118,7 @@ export default function HistorialPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-surface-800">
-                  {["ID", "Squad", "Tipo", "Orden", "Severidad", "Estado", "Agente", "Hace"].map(col => (
+                  {["ID", "Iniciativa", "Tipo", "Orden", "Severidad", "Estado", "Agente", "Hace"].map(col => (
                     <th
                       key={col}
                       className="text-left text-xs text-surface-500 font-medium px-6 py-3"
@@ -141,7 +141,7 @@ export default function HistorialPage() {
                     </td>
                     <td className="px-6 py-3">
                       <span className="text-xs text-surface-300">
-                        {caso.squad}
+                        {caso.iniciativa}
                       </span>
                     </td>
                     <td className="px-6 py-3">
