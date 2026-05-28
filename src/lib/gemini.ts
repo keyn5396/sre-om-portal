@@ -1,51 +1,23 @@
 /**
  * gemini.ts
  *
- * Responsabilidad: Cliente del agente IA.
- * Integra el contexto RAG del equipo antes de cada llamada a la API de Gemini.
- * Construye prompts estructurados y devuelve respuestas tipadas.
+ * Cliente del agente IA. Importa tipos desde @/types/agent.
+ * CAMBIO v2: eliminados tipos duplicados — un solo lugar de verdad.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { seleccionarContextoRelevante } from './knowledge';
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
-export interface ConsultaAgente {
-  iniciativa: string;
-  tipoProblema: string;
-  severidad: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-  numeroOrden?: string;
-  descripcion: string;
-  nombreUsuario: string;
-}
-
-export interface RespuestaAgente {
-  agenteDerivado: string;
-  diagnostico: string;
-  causaProbable: string;
-  pasosResolucion: string[];
-  comandosSugeridos?: string[];
-  requiereEscalacion: boolean;
-  nivelConfianza: 'ALTO' | 'MEDIO' | 'BAJO';
-  categoriaDiagnostico: string;
-}
-
-// ─── Cliente Gemini ───────────────────────────────────────────────────────────
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { seleccionarContextoRelevante } from './knowledge'
+import type { ConsultaAgente, RespuestaAgente } from '@/types/agent'
 
 function obtenerClienteGemini(): GoogleGenerativeAI {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY no está configurada en las variables de entorno');
-  }
-  return new GoogleGenerativeAI(apiKey);
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY no configurada')
+  return new GoogleGenerativeAI(apiKey)
 }
-
-// ─── Constructor de prompt con RAG ───────────────────────────────────────────
 
 function construirPrompt(consulta: ConsultaAgente, contextoRAG: string): string {
   return `
-Sos el agente QA Salesforce OM del iniciativa OM del cluster Provision.
+Sos el agente QA Salesforce OM de la iniciativa OM del cluster Provision.
 Tu rol es diagnosticar y resolver problemas de Order Management en Salesforce.
 Respondés siempre en español, con diagnósticos precisos y pasos accionables.
 
@@ -59,7 +31,7 @@ ${contextoRAG}
 CONSULTA DEL QA
 ════════════════════════════════════════
 
-- iniciativa: ${consulta.iniciativa}
+- Iniciativa: ${consulta.iniciativa}
 - Tipo de problema: ${consulta.tipoProblema}
 - Severidad: ${consulta.severidad}
 - Número de orden: ${consulta.numeroOrden ?? 'No proporcionado'}
@@ -72,47 +44,37 @@ INSTRUCCIONES DE RESPUESTA
 
 Respondé ÚNICAMENTE con un JSON válido con esta estructura exacta:
 {
-  "agenteDerivado": "string — cuál sub-agente maneja esto: Diagnóstico / Resolución / Escalation",
-  "diagnostico": "string — diagnóstico claro del problema en 2-4 oraciones",
-  "causaProbable": "string — causa raíz más probable basada en el conocimiento del equipo",
-  "pasosResolucion": ["paso 1", "paso 2", "paso 3"],
-  "comandosSugeridos": ["comando o query SOQL si aplica"],
-  "requiereEscalacion": boolean,
-  "nivelConfianza": "ALTO | MEDIO | BAJO",
-  "categoriaDiagnostico": "categoría del error según la taxonomía del equipo"
+  "agenteDerivado": "Diagnóstico / Resolución / Escalation",
+  "diagnostico": "diagnóstico en 2-4 oraciones",
+  "causaRaiz": "causa raíz más probable",
+  "pasosResolucion": ["paso 1", "paso 2"],
+  "comandosSugeridos": ["SOQL o comando si aplica"],
+  "tiempoEstimado": "ej: 15 minutos",
+  "escalacion": false
 }
 
 No agregues texto antes ni después del JSON. Solo el JSON.
-  `.trim();
+  `.trim()
 }
-
-// ─── Función principal de consulta ───────────────────────────────────────────
 
 export async function consultarAgente(
   consulta: ConsultaAgente
 ): Promise<RespuestaAgente> {
-  // 1. Seleccionar contexto RAG relevante para esta consulta
   const contextoRAG = seleccionarContextoRelevante(
     consulta.tipoProblema,
     consulta.descripcion
-  );
+  )
+  const prompt  = construirPrompt(consulta, contextoRAG)
+  const genAI   = obtenerClienteGemini()
+  const modelo  = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
-  // 2. Construir el prompt completo con el contexto inyectado
-  const prompt = construirPrompt(consulta, contextoRAG);
+  const resultado      = await modelo.generateContent(prompt)
+  const textoRespuesta = resultado.response.text()
 
-  // 3. Llamar a la API de Gemini
-  const genAI = obtenerClienteGemini();
-  const modelo = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-  const resultado = await modelo.generateContent(prompt);
-  const textoRespuesta = resultado.response.text();
-
-  // 4. Parsear y devolver respuesta tipada
   const respuestaLimpia = textoRespuesta
     .replace(/```json/g, '')
     .replace(/```/g, '')
-    .trim();
+    .trim()
 
-  const respuestaParsed = JSON.parse(respuestaLimpia) as RespuestaAgente;
-  return respuestaParsed;
+  return JSON.parse(respuestaLimpia) as RespuestaAgente
 }
