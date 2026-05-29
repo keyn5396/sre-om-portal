@@ -23,15 +23,12 @@ export const INICIATIVAS = [
 ] as const
 
 // Tipos de error más frecuentes en Order Management
+// Tipos de error en Order Management — categorías definitivas
+// Reflejan el impacto real en la orden, no el síntoma técnico
 export const TIPOS_ERROR = [
-  "Tarea trabada en Running",
-  "Timeout en callback",
-  "Fallo de validación de estado",
-  "Error en plan de orquestación",
-  "Push event no recibido",
-  "Rollback no ejecutado",
-  "Error de integración SOM",
-  "Error de integración Huawei",
+  "Tarea en Running",
+  "Tarea Fatally Failed",
+  "Orden Rechazada",
 ] as const
 
 // Severidades con su peso numérico para ordenamiento
