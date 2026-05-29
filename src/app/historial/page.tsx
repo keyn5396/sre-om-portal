@@ -46,7 +46,7 @@ export default function HistorialPage() {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Buscar por ID, squad o descripción..."
+                placeholder="Buscar por ID, iniciativa o descripción..."
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
                 className="

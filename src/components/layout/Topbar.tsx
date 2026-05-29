@@ -64,7 +64,7 @@ export function Topbar() {
         ">
           <div className="w-2 h-2 rounded-full bg-primary-500" />
           <span className="text-xs text-surface-300 font-medium">
-            Squad OM
+            OM Operations
           </span>
         </div>
 
